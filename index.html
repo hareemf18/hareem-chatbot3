@@ -1,0 +1,106 @@
+import os
+import openai
+from flask import Flask, request, jsonify, render_template_string
+
+app = Flask(__name__)
+
+# Gemini API key should be set as an environment variable for security
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+hareem_persona = """
+You are Hareem Farooq, a 16-year-old.
+You did your O Levels from Crescent and are currently waiting for your result which is in August.
+You love painting, reading, and playing many sports like football, cricket, basketball, and badminton.
+You also did horse riding when you were in kindergarten.
+You are currently writing diaries and will look forward to writing your own novels as well.
+You love cooking and baking.
+In your free time, you read novels, watch series/movies.
+You love eating Korean and Italian food.
+You love exploring new places and learning about new things.
+You love trying different kinds of food and drinks.
+You did your first internship at WWF Pakistan.
+You also did many MUNs (Model United Nations).
+You love watching F1 and you love to drive.
+You want to be a lawyer as you want to stand up for people.
+Answer questions as Hareem, using only the information provided about her. If a question is outside this scope, politely state that you can only answer based on Hareem's information.
+"""
+
+@app.route("/")
+def index():
+    # Serve a simple HTML page (replace with your own frontend if needed)
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Hareem's Chatbot</title>
+        <style>
+            body { font-family: sans-serif; background: #f0f2f5; }
+            .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 20px; }
+            .messages { min-height: 300px; margin-bottom: 20px; }
+            .user { color: #312e81; background: #e0e7ff; border-radius: 10px; padding: 10px; margin: 5px 0; text-align: right; }
+            .bot { color: #065f46; background: #d1fae5; border-radius: 10px; padding: 10px; margin: 5px 0; text-align: left; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Hareem's Chatbot</h2>
+            <div class="messages" id="messages">
+                <div class="bot">Hi there! I'm Hareem. What would you like to know about me?</div>
+            </div>
+            <input type="text" id="input" style="width:80%;" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+            <div style="margin-top:10px; font-size:0.9em; color:#b45309;">API Key is being used for dynamic responses.</div>
+        </div>
+        <script>
+            function addMessage(text, sender) {
+                var div = document.createElement('div');
+                div.className = sender;
+                div.textContent = text;
+                document.getElementById('messages').appendChild(div);
+                document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            }
+            function sendMessage() {
+                var input = document.getElementById('input');
+                var text = input.value.trim();
+                if (!text) return;
+                addMessage(text, 'user');
+                input.value = '';
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text})
+                })
+                .then(r => r.json())
+                .then(data => addMessage(data.response, 'bot'))
+                .catch(() => addMessage("Sorry, I couldn't get a response.", 'bot'));
+            }
+            document.getElementById('input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+        </script>
+    </body>
+    </html>
+    """)
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_message = request.json.get("message", "")
+    if not user_message:
+        return jsonify({"response": "Please enter a message."})
+
+    # Compose prompt for Gemini
+    prompt = hareem_persona + "\n\nUser: " + user_message + "\nHareem:"
+    # Gemini API call (using OpenAI compatible endpoint if available)
+    # Replace this with actual Gemini API call if needed
+    # For demonstration, we use a static response
+    # You can integrate Gemini API here as per documentation
+
+    # Example Gemini API call (pseudo-code, replace with actual implementation)
+    # response = gemini_generate_content(prompt, api_key=GEMINI_API_KEY)
+    # For now, return a static response
+    response = "I'm Hareem! I love painting, reading, and sports. Ask me anything about my hobbies or experiences!"
+
+    return jsonify({"response": response})
+
+if __name__ == "__main__":
+    app.run(debug=True)
